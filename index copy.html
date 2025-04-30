@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Viewer with Accurate Rendering and Movable Text</title>
+  <style>
+    #pdf-container {
+      position: relative;
+      border: 1px solid #ccc;
+      width: 80%;
+      margin: auto;
+      overflow: hidden;
+    }
+    #canvas {
+      display: block;
+    }
+    .movable-text {
+      position: absolute;
+      background: rgba(255, 255, 0, 0.7);
+      padding: 2px 5px;
+      cursor: move;
+      border: 1px solid #000;
+    }
+  </style>
+</head>
+<body>
+  <h1>PDF Viewer with Movable Text</h1>
+  <input type="file" id="file-input" accept="application/pdf">
+  <div id="pdf-container">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    const pdfContainer = document.getElementById("pdf-container");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    let pdfDoc = null;
+    let scale = 1; // Initial scale for rendering the PDF
+    let currentViewport = null; // To store the viewport for scaling
+
+    document.getElementById("file-input").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (file && file.type === "application/pdf") {
+        const fileReader = new FileReader();
+        fileReader.onload = async function (event) {
+          const typedArray = new Uint8Array(event.target.result);
+          const pdf = await pdfjsLib.getDocument(typedArray).promise;
+          pdfDoc = pdf;
+          renderPage(1); // Render the first page
+        };
+        fileReader.readAsArrayBuffer(file);
+      }
+    });
+
+    async function renderPage(pageNumber) {
+      const page = await pdfDoc.getPage(pageNumber);
+      const viewport = page.getViewport({ scale });
+      currentViewport = viewport; // Save the current viewport
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      const renderContext = {
+        canvasContext: ctx,
+        viewport: viewport,
+      };
+      await page.render(renderContext).promise;
+
+      // Add 10 sample movable text placeholders
+      for (let i = 1; i <= 10; i++) {
+        const x = Math.random() * (viewport.width - 100); // Random x position
+        const y = Math.random() * (viewport.height - 50); // Random y position
+        addMovableText(`Placeholder ${i}`, x, y);
+      }
+    }
+
+    function addMovableText(text, x, y) {
+      const div = document.createElement("div");
+      div.className = "movable-text";
+      div.textContent = text;
+      div.style.left = `${x}px`;
+      div.style.top = `${y}px`;
+
+      let isDragging = false;
+      let offsetX, offsetY;
+
+      // Handle mouse events
+      div.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        offsetX = e.offsetX;
+        offsetY = e.offsetY;
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (isDragging) {
+          const containerRect = pdfContainer.getBoundingClientRect();
+          div.style.left = `${e.clientX - containerRect.left - offsetX}px`;
+          div.style.top = `${e.clientY - containerRect.top - offsetY}px`;
+        }
+      });
+
+      document.addEventListener("mouseup", () => {
+        isDragging = false;
+      });
+
+      // Handle touch events
+      div.addEventListener("touchstart", (e) => {
+        isDragging = true;
+
+        const touch = e.touches[0];
+        const divRect = div.getBoundingClientRect();
+        offsetX = touch.clientX - divRect.left;
+        offsetY = touch.clientY - divRect.top;
+      });
+
+      document.addEventListener("touchmove", (e) => {
+        if (isDragging) {
+          e.preventDefault(); // Prevent scrolling while dragging
+          const touch = e.touches[0];
+          const containerRect = pdfContainer.getBoundingClientRect();
+          div.style.left = `${touch.clientX - containerRect.left - offsetX}px`;
+          div.style.top = `${touch.clientY - containerRect.top - offsetY}px`;
+        }
+      });
+
+      document.addEventListener("touchend", () => {
+        isDragging = false;
+      });
+
+      pdfContainer.appendChild(div);
+    }
+
+    function saveTextCoordinates(div) {
+      const rect = div.getBoundingClientRect();
+      const containerRect = pdfContainer.getBoundingClientRect();
+
+      // Calculate coordinates relative to the canvas
+      const x = rect.left - containerRect.left;
+      const y = rect.top - containerRect.top;
+
+      // Adjust based on the current viewport scale
+      const scaledX = x / currentViewport.scale;
+      const scaledY = y / currentViewport.scale;
+
+      console.log(`Text Coordinates: { x: ${scaledX}, y: ${scaledY} }`);
+    }
+  </script>
+</body>
+</html>

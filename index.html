@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Viewer with Accurate Rendering and Movable Text</title>
+  <style>
+    #pdf-container {
+      position: relative;
+      border: 1px solid #ccc;
+      width: 80%;
+      margin: auto;
+      overflow: hidden;
+    }
+    #canvas {
+      display: block;
+    }
+    .movable-text {
+      position: absolute;
+      background: rgba(255, 255, 0, 0.7);
+      padding: 2px 5px;
+      cursor: move;
+      border: 1px solid #000;
+    }
+    #coordinates {
+      margin: 20px;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>PDF Viewer with Movable Text</h1>
+  <button class="buildJSON">Create JSON</button>
+  <input type="file" id="file-input" accept="application/pdf">
+  <div id="coordinates">Coordinates: (x: 0, y: 0) | Position: center</div>
+  <div id="pdf-container">
+    <canvas id="canvas"></canvas>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.7.1.js" ></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    const pdfContainer = document.getElementById("pdf-container");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const coordinatesDisplay = document.getElementById("coordinates");
+
+    let pdfDoc = null;
+    let scale = 1; // Initial scale for rendering the PDF
+    let currentViewport = null; // To store the viewport for scaling
+
+    // Provided data for placeholders
+    const placeholders = [
+      { key: "bidNo1", position: "top-right", offsetX: 50, offsetY: 50 },
+      { key: "bidNo2", position: "top-left", offsetX: 50, offsetY: 50 },
+      { key: "bidNo3", position: "bottom-right", offsetX: 50, offsetY: 50 },
+      { key: "DP_ID1", position: "bottom-left", offsetX: 50, offsetY: 50 },
+      { key: "DP_ID2", position: "top-center", offsetX: 50, offsetY: 50 },
+      { key: "MobileNo1", position: "bottom-center", offsetX: 50, offsetY: 50 },
+      { key: "MobileNo2", position: "center", offsetX: 50, offsetY: 50 },
+      { key: "email1", position: "left-center", offsetX: 50, offsetY: 50 },
+      { key: "email2", position: "right-center", offsetX: 50, offsetY: 50 },
+      { key: "Address", position: "top-right", offsetX: 100, offsetY: 100 },
+      { key: "ApplicantName1", position: "top-left", offsetX: 100, offsetY: 100 },
+      { key: "ApplicantName2", position: "bottom-right", offsetX: 100, offsetY: 100 },
+      { key: "ApplicantName3", position: "bottom-left", offsetX: 100, offsetY: 100 },
+      { key: "panNo1", position: "center", offsetX: 100, offsetY: 100 },
+      { key: "panNo2", position: "top-center", offsetX: 100, offsetY: 100 },
+      { key: "amountInWord", position: "bottom-center", offsetX: 100, offsetY: 100 },
+    ];
+
+    document.getElementById("file-input").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (file && file.type === "application/pdf") {
+        const fileReader = new FileReader();
+        fileReader.onload = async function (event) {
+          const typedArray = new Uint8Array(event.target.result);
+          const pdf = await pdfjsLib.getDocument(typedArray).promise;
+          pdfDoc = pdf;
+          renderPage(1); // Render the first page
+        };
+        fileReader.readAsArrayBuffer(file);
+      }
+    });
+
+    async function renderPage(pageNumber) {
+      const page = await pdfDoc.getPage(pageNumber);
+      const viewport = page.getViewport({ scale });
+      console.log("Viewport:", viewport); // Log the viewport for debugging
+      currentViewport = viewport; // Save the current viewport
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      const renderContext = {
+        canvasContext: ctx,
+        viewport: viewport,
+      };
+      await page.render(renderContext).promise;
+
+      // Add movable text placeholders based on the provided data
+      placeholders.forEach((fieldValue) => {
+        const { x, y } = getCoordinates(viewport, fieldValue);
+        addMovableText(fieldValue.key, x, y, fieldValue.position);
+      });
+    }
+
+    function getCoordinates(viewport, fieldValue) {
+      const pageWidth = viewport.width;
+      const pageHeight = viewport.height;
+      const position = fieldValue.position;
+      const offsetX = fieldValue.offsetX;
+      const offsetY = fieldValue.offsetY;
+
+      let x = 0;
+      let y = 0;
+
+      switch (position) {
+        case "top-right":
+          x = pageWidth - offsetX;
+          y = offsetY;
+          break;
+        case "top-left":
+          x = offsetX;
+          y = offsetY;
+          break;
+        case "bottom-right":
+          x = pageWidth - offsetX;
+          y = pageHeight - offsetY;
+          break;
+        case "bottom-left":
+          x = offsetX;
+          y = pageHeight - offsetY;
+          break;
+        case "top-center":
+          x = (pageWidth / 2) - (offsetX / 2);
+          y = offsetY;
+          break;
+        case "bottom-center":
+          x = (pageWidth / 2) - (offsetX / 2);
+          y = pageHeight - offsetY;
+          break;
+        case "center":
+          x = (pageWidth / 2) - (offsetX / 2);
+          y = (pageHeight / 2) - (offsetY / 2);
+          break;
+        case "left-center":
+          x = offsetX;
+          y = (pageHeight / 2) - (offsetY / 2);
+          break;
+        case "right-center":
+          x = pageWidth - offsetX;
+          y = (pageHeight / 2) - (offsetY / 2);
+          break;
+        default:
+          throw new Error(`Invalid position: ${position}`);
+      }
+
+      return { x, y };
+    }
+
+    function addMovableText(text, x, y, initialPosition) {
+      const div = document.createElement("div");
+      div.className = "movable-text";
+      div.textContent = text;
+      div.style.left = `${x}px`;
+      div.style.top = `${y}px`;
+      div.setAttribute("data-key", text);
+
+      let isDragging = false;
+      let offsetX, offsetY;
+
+      // Handle mouse events
+      div.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        offsetX = e.offsetX;
+        offsetY = e.offsetY;
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (isDragging) {
+          const containerRect = pdfContainer.getBoundingClientRect();
+          const newX = e.clientX - containerRect.left - offsetX;
+          const newY = e.clientY - containerRect.top - offsetY;
+          div.style.left = `${newX}px`;
+          div.style.top = `${newY}px`;
+
+          // Determine the position dynamically
+          const pageWidth = currentViewport.width;
+          const pageHeight = currentViewport.height;
+          let position = determinePosition(newX, newY, pageWidth, pageHeight);
+
+          // Update coordinates and position display
+          coordinatesDisplay.textContent = `Coordinates: (x: ${Math.round(newX)}, y: ${Math.round(newY)}) | Position: ${position}`;
+          div.setAttribute("data-x", Math.round(newX));
+          div.setAttribute("data-y", Math.round(newY));
+          div.setAttribute("data-position", position);
+        }
+      });
+
+      document.addEventListener("mouseup", () => {
+        isDragging = false;
+      });
+
+      // Handle touch events
+      div.addEventListener("touchstart", (e) => {
+        isDragging = true;
+
+        const touch = e.touches[0];
+        const divRect = div.getBoundingClientRect();
+        offsetX = touch.clientX - divRect.left;
+        offsetY = touch.clientY - divRect.top;
+      });
+
+      document.addEventListener("touchmove", (e) => {
+        if (isDragging) {
+          e.preventDefault(); // Prevent scrolling while dragging
+          const touch = e.touches[0];
+          const containerRect = pdfContainer.getBoundingClientRect();
+          const newX = touch.clientX - containerRect.left - offsetX;
+          const newY = touch.clientY - containerRect.top - offsetY;
+          div.style.left = `${newX}px`;
+          div.style.top = `${newY}px`;
+
+          // Determine the position dynamically
+          const pageWidth = currentViewport.width;
+          const pageHeight = currentViewport.height;
+          let position = determinePosition(newX, newY, pageWidth, pageHeight);
+
+          // Update coordinates and position display
+          coordinatesDisplay.textContent = `Coordinates: (x: ${Math.round(newX)}, y: ${Math.round(newY)}) | Position: ${position}`;
+        }
+      });
+
+      document.addEventListener("touchend", () => {
+        isDragging = false;
+      });
+
+      pdfContainer.appendChild(div);
+    }
+
+    function determinePosition(x, y, pageWidth, pageHeight) {
+      if (x > pageWidth / 2 && y < pageHeight / 2) return "top-right";
+      if (x < pageWidth / 2 && y < pageHeight / 2) return "top-left";
+      if (x > pageWidth / 2 && y > pageHeight / 2) return "bottom-right";
+      if (x < pageWidth / 2 && y > pageHeight / 2) return "bottom-left";
+      if (Math.abs(x - pageWidth / 2) < 50 && y < pageHeight / 2) return "top-center";
+      if (Math.abs(x - pageWidth / 2) < 50 && y > pageHeight / 2) return "bottom-center";
+      if (Math.abs(x - pageWidth / 2) < 50 && Math.abs(y - pageHeight / 2) < 50) return "center";
+      if (x < pageWidth / 2 && Math.abs(y - pageHeight / 2) < 50) return "left-center";
+      if (x > pageWidth / 2 && Math.abs(y - pageHeight / 2) < 50) return "right-center";
+      return "unknown";
+    }
+
+    $(document).ready(function() {
+
+        $(".buildJSON").on('click',function(){
+                let array = []
+                $(".movable-text").each(function(index, elm){
+                    console.log(elm)
+                    const x = $(elm).attr("data-x") || 0;
+                    const y = $(elm).attr("data-y") || 0;
+                    const position = $(elm).attr("data-position") || "unknown";
+                    const key = $(elm).attr("data-key") || "unknown";
+                    const json = {
+                        x: x,
+                        y: y,
+                        position: position,
+                        key: key
+                    };
+                    array.push(json)
+                })
+            
+            console.log(array);
+        })
+
+        
+    });
+
+  </script>
+</body>
+</html>

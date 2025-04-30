@@ -1,0 +1,14 @@
+    function saveTextCoordinates(div) {
+      const rect = div.getBoundingClientRect();
+      const containerRect = pdfContainer.getBoundingClientRect();
+
+      // Calculate coordinates relative to the canvas
+      const x = rect.left - containerRect.left;
+      const y = rect.top - containerRect.top;
+
+      // Adjust based on the current viewport scale
+      const scaledX = x / currentViewport.scale;
+      const scaledY = y / currentViewport.scale;
+
+      console.log(`Text Coordinates: { x: ${scaledX}, y: ${scaledY} }`);
+    }
