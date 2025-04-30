@@ -1,0 +1,24 @@
+{
+  "name": "asba-pdf-writer",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/surajvsk/asba-pdf-writer#readme",
+  "bugs": {
+    "url": "https://github.com/surajvsk/asba-pdf-writer/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/surajvsk/asba-pdf-writer.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "test.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {}
+}
