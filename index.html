@@ -25,6 +25,7 @@
       padding: 2px 5px;
       cursor: move;
       border: 1px solid #000;
+      color:fuchsia;
     }
     #coordinates {
       margin: 20px;
@@ -36,6 +37,7 @@
 </head>
 <body>
   <h1>PDF Viewer with Movable Text</h1>
+  <textarea id="json-output" rows="10" cols="50" placeholder="JSON output will appear here..."></textarea>
   <button class="buildJSON">Create JSON</button>
   <input type="file" id="file-input" accept="application/pdf">
   <div id="coordinates">Coordinates: (x: 0, y: 0) | Position: center</div>
@@ -57,8 +59,15 @@
     const placeholders = [
       { key: "bidNo1", x: 100, y: 100 },
       { key: "bidNo2", x: 150, y: 150 },
+      { key: "bidNo3", x: 158, y: 158 },
       { key: "email1", x: 200, y: 200 },
       { key: "MobileNo1", x: 250, y: 250 },
+      { key: "MobileNo2", x: 300, y: 250 },
+      { key: "ApplicationNo1", x: 350, y: 250 },
+      { key: "ApplicationNo2", x: 400, y: 250 },
+      { key: "ApplicationNo3", x: 450, y: 250 },
+      {key:"UPI", x: 500, y: 250},
+      
       // Add more here as needed
     ];
   
@@ -141,12 +150,14 @@
         const array = [];
         $(".movable-text").each(function (_, elm) {
           array.push({
-            x: $(elm).attr("data-x") || 0,
-            y: $(elm).attr("data-y") || 0,
-            key: $(elm).attr("data-key") || "unknown"
+            x : Number($(elm).attr("data-x")) || 0,
+            y : Number($(elm).attr("data-y")) || 0,
+            key: $(elm).attr("data-key") || "unknown",
+            value: $(elm).text() || "unknown",
           });
         });
         console.log(array);
+        $("#json-output").val(JSON.stringify(array, null, 2));
       });
     });
   </script>
