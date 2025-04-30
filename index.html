@@ -57,19 +57,29 @@
     let currentViewport = null;
   
     const placeholders = [
-      { key: "bidNo1", x: 100, y: 100 },
-      { key: "bidNo2", x: 150, y: 150 },
-      { key: "bidNo3", x: 158, y: 158 },
-      { key: "email1", x: 200, y: 200 },
-      { key: "MobileNo1", x: 250, y: 250 },
-      { key: "MobileNo2", x: 300, y: 250 },
-      { key: "ApplicationNo1", x: 350, y: 250 },
-      { key: "ApplicationNo2", x: 400, y: 250 },
-      { key: "ApplicationNo3", x: 450, y: 250 },
-      {key:"UPI", x: 500, y: 250},
-      
-      // Add more here as needed
-    ];
+  { key: "ApplicationNo1", x: 150, y: 150, value: "ApplicationNo1" },
+  { key: "ApplicationNo2", x: 200, y: 200, value: "ApplicationNo1" },
+  { key: "ApplicationNo3", x: 208, y: 208, value: "ApplicationNo1" },
+  { key: "email1", x: 250, y: 250, value: "ApplicationNo1" },
+  { key: "email2", x: 250, y: 250, value: "ApplicationNo1" },
+  { key: "MobileNo1", x: 300, y: 300, value: "ApplicationNo1" },
+  { key: "MobileNo2", x: 350, y: 300, value: "ApplicationNo1" },
+  { key: "ApplicantName1", x: 400, y: 300, value: "ApplicationNo1" },
+  { key: "ApplicantName2", x: 450, y: 300, value: "ApplicationNo1" },
+  { key: "ApplicantName3", x: 500, y: 300, value: "ApplicationNo1" },
+  { key: "amount1", x: 500, y: 300, value: "ApplicationNo1" },
+  { key: "amount2", x: 500, y: 300, value: "ApplicationNo1" },
+  { key: "no_of_bid1", x: 500, y: 300, value: "ApplicationNo1" },
+  { key: "no_of_bid1", x: 500, y: 300, value: "ApplicationNo1" },
+  { key: "bid_price1", x: 500, y: 300, value: "ApplicationNo1" },
+  { key: "bid_price2", x: 500, y: 300, value: "ApplicationNo1" },
+  { key: "amount_in_word", x: 500, y: 300, value: "ApplicationNo1" },
+  { key: "dpid1", x: 500, y: 300, value: "dpid1" },
+  { key: "dpid2", x: 500, y: 300, value: "dpid2" },
+  { key: "panNo1", x: 500, y: 300, value: "dpid1" },
+  { key: "panNo2", x: 500, y: 300, value: "dpid2" },
+  { key: "UPI", x: 550, y: 300 },
+];
   
     document.getElementById("file-input").addEventListener("change", async (e) => {
       const file = e.target.files[0];
