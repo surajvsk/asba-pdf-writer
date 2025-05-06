@@ -56,7 +56,7 @@
 
 <div class="container-fluid">
   <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-5">
       <!-- <textarea id="json-output" rows="10" cols="50" placeholder="JSON output will appear here..."></textarea> -->
       <select class="form-select mb-2 rounded-0" id="symbol-select">
         <option value="0">Select Symbol</option>
@@ -80,6 +80,7 @@
                 <th>X</th>
                 <th>Y</th>
                 <th>Font Size</th>
+                <th>Font Spacing</th>
                 <th>Value</th>
                 <th>Action</th>
             </tr>
@@ -90,7 +91,7 @@
     </table>
 
     </div>
-    <div class="col-md-8">
+    <div class="col-md-5">
       <div id="pdf-container">
         <canvas id="canvas"></canvas>
       </div>
@@ -118,28 +119,28 @@
       let currentViewport = null;
     
       const placeholders = [
-    { key: "ApplicationNo1", x: 150, y: 150, value: "55556666" },
-    { key: "ApplicationNo2", x: 200, y: 200, value: "55556666" },
-    { key: "ApplicationNo3", x: 208, y: 208, value: "55556666" },
-    { key: "email1", x: 250, y: 250, value: "youremail@domain.com" },
-    { key: "email2", x: 250, y: 250, value: "youremail@domain.com" },
-    { key: "MobileNo1", x: 300, y: 300, value: "1112227778" },
-    { key: "MobileNo2", x: 350, y: 300, value: "1112227778" },
-    { key: "ApplicantName1", x: 400, y: 300, value: "Arihant Capital Markets Limited" },
-    { key: "ApplicantName2", x: 450, y: 300, value: "Arihant Capital Markets Limited" },
-    { key: "ApplicantName3", x: 500, y: 300, value: "Arihant Capital Markets Limited" },
-    { key: "amount1", x: 500, y: 300, value: "100000" },
-    { key: "amount2", x: 500, y: 300, value: "100000" },
-    { key: "no_of_bid1", x: 500, y: 300, value: "50" },
-    { key: "no_of_bid2", x: 500, y: 300, value: "50" },
-    { key: "bid_price1", x: 500, y: 300, value: "500" },
-    { key: "bid_price2", x: 500, y: 300, value: "500" },
-    { key: "amount_in_word", x: 500, y: 300, value: "Five Thousand ninty nine" },
-    { key: "dpid1", x: 500, y: 300, value: "IN12345678950" },
-    { key: "dpid2", x: 500, y: 300, value: "IN12345678950" },
-    { key: "panNo1", x: 500, y: 300, value: "AYCPV8888G" },
-    { key: "panNo2", x: 500, y: 300, value: "AYCPV8888G" },
-    { key: "UPI", x: 550, y: 300, value: "arihantcapital@bank.ok" },
+    { key: "ApplicationNo1", x: 150, y: 150, value: "55556666", wordspaceCount: 0 },
+    { key: "ApplicationNo2", x: 200, y: 200, value: "55556666", wordspaceCount: 0 },
+    { key: "ApplicationNo3", x: 208, y: 208, value: "55556666" , wordspaceCount: 0},
+    { key: "email1", x: 250, y: 250, value: "youremail@domain.com", wordspaceCount: 0 },
+    { key: "email2", x: 250, y: 250, value: "youremail@domain.com" , wordspaceCount: 0},
+    { key: "MobileNo1", x: 300, y: 300, value: "1112227778", wordspaceCount: 0 },
+    { key: "MobileNo2", x: 350, y: 300, value: "1112227778", wordspaceCount: 0 },
+    { key: "ApplicantName1", x: 400, y: 300, value: "Arihant Capital Markets Limited" , wordspaceCount: 0},
+    { key: "ApplicantName2", x: 450, y: 300, value: "Arihant Capital Markets Limited" , wordspaceCount: 0},
+    { key: "ApplicantName3", x: 500, y: 300, value: "Arihant Capital Markets Limited" , wordspaceCount: 0},
+    { key: "amount1", x: 500, y: 300, value: "100000", wordspaceCount: 0 },
+    { key: "amount2", x: 500, y: 300, value: "100000" , wordspaceCount: 0},
+    { key: "no_of_bid1", x: 500, y: 300, value: "50" , wordspaceCount: 0},
+    { key: "no_of_bid2", x: 500, y: 300, value: "50" , wordspaceCount: 0},
+    { key: "bid_price1", x: 500, y: 300, value: "500" , wordspaceCount: 0},
+    { key: "bid_price2", x: 500, y: 300, value: "500" , wordspaceCount: 0},
+    { key: "amount_in_word", x: 500, y: 300, value: "Five Thousand ninty nine" , wordspaceCount: 0},
+    { key: "dpid1", x: 500, y: 300, value: "IN12345678950" , wordspaceCount: 0},
+    { key: "dpid2", x: 500, y: 300, value: "IN12345678950" , wordspaceCount: 0},
+    { key: "panNo1", x: 500, y: 300, value: "AYCPV8888G" , wordspaceCount: 0  },
+    { key: "panNo2", x: 500, y: 300, value: "AYCPV8888G" , wordspaceCount: 0},
+    { key: "UPI", x: 550, y: 300, value: "arihantcapital@bank.ok" , wordspaceCount: 0},
   ];
 
   placeholders.forEach(function(item){
@@ -147,8 +148,9 @@
           <td data-key="${item.key}">${item.key}</td>
           <td class="x">${item.x}</td>
           <td class="y">${item.y}</td>
-          <td><input type="number" class="form-control rounded-0" value="10"></td>
-          <td><input type="text" class="form-control rounded-0" value="${item.value}"></td>
+          <td><input type="number" class="form-control rounded-0 fontSize" value="10"></td>
+          <td><input type="number" class="form-control rounded-0 wordspaceCount" value="${item.wordspaceCount}"></td>
+          <td><input type="text" class="form-control rounded-0 value" value="${item.value}"></td>
           <td><input type="checkbox" class="active rounded-0"></td>
           </tr>`);
   });
@@ -186,12 +188,14 @@
         });
       }
     
-      function addMovableText(text, x, y) {
+      function addMovableText(text, x, y,fontSize, wordspaceCount, value) {
         const div = document.createElement("div");
         div.className = "movable-text";
-        div.textContent = text;
+        div.textContent = value;
         div.style.left = `${x}px`;
         div.style.top = `${y}px`;
+        div.style.fontSize = `${fontSize}px`;
+        div.style.wordSpacing = `${wordspaceCount}px`;
         div.setAttribute("data-key", text);
     
         let isDragging = false, offsetX = 0, offsetY = 0;
@@ -214,6 +218,8 @@
             const pdfX = Math.round(newX);
             const pdfY = Math.round(currentViewport.height - newY); // Adjust for PDF coordinate system
             coordinatesDisplay.textContent = `PDF Coordinates: (x: ${pdfX}, y: ${pdfY})`;
+            // const fontSize = $(this).find(".fontSize").val();
+            // const wordspaceCount = $(this).find(".wordspaceCount").val();
     
             div.setAttribute("data-x", pdfX);
             div.setAttribute("data-y", pdfY);
@@ -224,6 +230,10 @@
             if (row.length) {
               row.data("x", pdfX);
               row.data("y", pdfY);
+              // row.val("fontSize", fontSize);
+              row.find(".fontSize").val(fontSize);
+              // row.val("wordspaceCount", wordspaceCount);
+              row.find(".wordspaceCount").val(wordspaceCount);
               row.find(".x").text(pdfX);
               row.find(".y").text(pdfY);
             }
@@ -238,36 +248,24 @@
       }
     
       $(document).ready(function () {
-        // $(".buildJSON").on("click", function () {
-        //   const array = [];
-        //   $(".movable-text").each(function (_, elm) {
-        //     array.push({
-        //       x : Number($(elm).attr("data-x")) || 0,
-        //       y : Number($(elm).attr("data-y")) || 0,
-        //       key: $(elm).attr("data-key") || "unknown",
-        //       value: $(elm).text() || "unknown",
-        //     });
-        //   });
-        //   console.log(array);
-        // });
-
 
         $(".buildJSON").on("click", function () {
           const array = [];
           $("#coordinates-table tbody tr").each(function (_, elm) {
-             console.log(elm)
             const key = $(elm).data("key");
             const x = $(elm).data("x") || 0;
             const y = $(elm).data("y") || 0;
             const value = $(elm).find("input[type='text']").val() || "unknown";
-            const fontSize = $(elm).find("input[type='number']").val() || 10;
+            const fontSize = $(elm).find(".fontSize").val() || 10;
             const isChecked = $(elm).find("input[type='checkbox']").is(":checked");
+            const wordspaceCount = $(elm).find(".wordspaceCount").val() || 10;
             if (isChecked) {
               array.push({
                 x: Number(x),
                 y: Number(y),
                 key: key,
                 fontSize: Number(fontSize),
+                wordspaceCount: Number(wordspaceCount),
                 value: value,
                 is_checked: isChecked ? 1 : 0,
               });
@@ -283,25 +281,68 @@
         });
 
 
-        $("#coordinates-table").on("click", ".active", function () {
+        $("#coordinates-table").on("change", ".active", function () {
           const row = $(this).closest("tr");
           const key = row.data("key");
           const x = row.data("x");
           const y = row.data("y");
-          const fontSize = row.find("input[type='number']").val() || 10;
+          const fontSize = row.find(".fontSize").val() || 10;
+          const wordspaceCount = row.find(".wordspaceCount").val() || 0;
+          const value = row.find(".value").val() || "unknown";
+          const valueWithSpaces = insertSpaces(value, wordspaceCount);
           const isChecked = $(this).is(":checked");
+          console.log(key, x, y, fontSize, wordspaceCount, value, isChecked);
 
           if (isChecked) {
             row.find("x").text(x);
             row.find("y").text(y);
             const canvasY = currentViewport.height - y;
-            addMovableText(key, x, canvasY);
+            addMovableText(key, x, canvasY, fontSize, wordspaceCount, valueWithSpaces);
           } else {
             pdfContainer.querySelector(`.movable-text[data-key="${key}"]`).remove();
           }
         });
 
+    // //fontSize
+    $("#coordinates-table").on("input", ".fontSize", function () {
+      const row = $(this).closest("tr");
+      const key = row.data("key");
+      const fontSize = $(this).val();
+      console.log(key, fontSize);
+      const x = row.data("x");
+      const y = row.data("y");
+      const wordspaceCount = row.find(".wordspaceCount").val() || 0;
+      const value = row.find(".value").val() || "unknown";
+      const valueWithSpaces = insertSpaces(value, wordspaceCount);
+      const canvasY = currentViewport.height - y;
+      addMovableText(key, x, canvasY, fontSize, wordspaceCount, valueWithSpaces);
+      pdfContainer.querySelector(`.movable-text[data-key="${key}"]`).remove();
+    });
 
+    // wordSpacing
+    $("#coordinates-table").on("input", ".wordspaceCount", function () {
+      const row = $(this).closest("tr");
+      const key = row.data("key");
+      const fontSize = row.find(".fontSize").val();
+      console.log(key, fontSize);
+      const x = row.data("x");
+      const y = row.data("y");
+      const wordspaceCount = row.find(".wordspaceCount").val() || 0;
+      const value = row.find(".value").val() || "unknown";
+      const valueWithSpaces = insertSpaces(value, wordspaceCount);
+      const canvasY = currentViewport.height - y;
+      addMovableText(key, x, canvasY, fontSize, wordspaceCount, valueWithSpaces);
+      pdfContainer.querySelector(`.movable-text[data-key="${key}"]`).remove();
+    });
+
+
+
+    function insertSpaces(input, spaceCount) {
+      // Create a string of spaces based on spaceCount
+      const spaces = ' '.repeat(spaceCount);
+      // Split the input into characters, join them with spaces, and return the result
+      return input.split('').join(spaces);
+  }
 
 
       });
