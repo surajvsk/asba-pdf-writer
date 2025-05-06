@@ -62,7 +62,7 @@
         <option value="0">Select Symbol</option>
         <option value="ARUNAYA">ARUNAYA</option>
         <option value="ATHER">ATHER</option>
-        <option value="KENRIK">KENRIK</option>
+        <option value="MANOJJEWEL">MANOJJEWEL</option>
       </select>
       <input type="file" class="form-control rounded-0" id="file-input" accept="application/pdf">
       <select class="form-select mt-2 rounded-0" id="form-type-select">
@@ -192,6 +192,7 @@
         const div = document.createElement("div");
         div.className = "movable-text";
         div.textContent = value;
+        div.title = text;
         div.style.left = `${x}px`;
         div.style.top = `${y}px`;
         div.style.fontSize = `${fontSize}px`;
