@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PDF Form Fields Drag & Drop</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <style>
+    body {
+      background: black;
+      display: flex;
+      font-family: sans-serif;
+    }
+
+    #sidebar {
+      width: 300px;
+      background: #111;
+      color: white;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .draggable-field {
+      background: #333;
+      padding: 8px;
+      text-align: center;
+      cursor: grab;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    #pdf-container {
+      flex: 1;
+      border: 1px solid #ccc;
+      height: 90vh;
+      overflow: auto;
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+    }
+
+    .pdf-field {
+      position: absolute;
+      padding: 2px 5px;
+      cursor: move;
+      font-size: 12px;
+      pointer-events: all;
+      background: rgba(255, 0, 0, 0.3);
+      border-radius: 3px;
+    }
+
+    .pdf-field .remove-btn {
+      display: none;
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      font-size: 10px;
+      line-height: 14px;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .pdf-field:hover .remove-btn {
+      display: block;
+    }
+
+    #coords {
+      position: fixed;
+      bottom: 10px;
+      left: 310px;
+      background: black;
+      color: white;
+      padding: 5px 10px;
+      font-family: monospace;
+      border-radius: 5px;
+    }
+
+    #field-list {
+      max-height: 200px;
+      overflow-y: auto;
+      background: #222;
+      padding: 5px;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+
+    #manual-add {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    #manual-add input, #manual-add button {
+      padding: 5px;
+      border-radius: 3px;
+      border: none;
+    }
+
+    #manual-add button {
+      background: #444;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <input type="file" id="file-input" />
+
+    <h4>Draggable Form Fields:</h4>
+    <div class="draggable-field" draggable="true" data-type="text">Text Box</div>
+    <div class="draggable-field" draggable="true" data-type="textarea">Text Area</div>
+    <div class="draggable-field" draggable="true" data-type="checkbox">Checkbox</div>
+    <div class="draggable-field" draggable="true" data-type="radio">Radio Button</div>
+    <div class="draggable-field" draggable="true" data-type="select">Dropdown</div>
+    <div class="draggable-field" draggable="true" data-type="date">Date Picker</div>
+    <div class="draggable-field" draggable="true" data-type="number">Number</div>
+    <div class="draggable-field" draggable="true" data-type="password">Password</div>
+    <div class="draggable-field" draggable="true" data-type="email">Email</div>
+    <div class="draggable-field" draggable="true" data-type="file">File Upload</div>
+
+    <h4>Added Fields:</h4>
+    <div id="field-list"></div>
+
+    <h4>Manual Add:</h4>
+    <div id="manual-add">
+      <input type="text" id="manual-name" placeholder="Field Name" />
+      <input type="number" id="manual-x" placeholder="X coordinate" />
+      <input type="number" id="manual-y" placeholder="Y coordinate" />
+      <button id="add-field-btn">Add Field</button>
+    </div>
+  </div>
+
+  <div id="pdf-container"></div>
+  <div id="coords">Move mouse over PDF to get X,Y</div>
+
+  <script>
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    let pdfDoc = null;
+    let scale = 1.5; 
+    let canvas, ctx, viewport;
+    const pdfContainer = document.getElementById('pdf-container');
+    const fieldList = document.getElementById('field-list');
+    let fieldsData = [];
+
+    document.getElementById('file-input').addEventListener('change', handleFile);
+
+    function handleFile(event) {
+      const file = event.target.files[0];
+      if (file.type !== 'application/pdf') {
+        alert("Please upload a PDF file");
+        return;
+      }
+
+      const fileReader = new FileReader();
+      fileReader.onload = function() {
+        const typedarray = new Uint8Array(this.result);
+        pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+          pdfDoc = pdf;
+          renderPage(1);
+        });
+      };
+      fileReader.readAsArrayBuffer(file);
+    }
+
+    function renderPage(num) {
+      pdfDoc.getPage(num).then(function(page) {
+        viewport = page.getViewport({ scale: scale });
+
+        canvas = document.createElement("canvas");
+        ctx = canvas.getContext("2d");
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        pdfContainer.innerHTML = "";
+        pdfContainer.appendChild(canvas);
+
+        page.render({ canvasContext: ctx, viewport: viewport });
+
+        canvas.addEventListener("mousemove", function(e) {
+          const rect = canvas.getBoundingClientRect();
+          const x = (e.clientX - rect.left);
+          const y = (e.clientY - rect.top);
+          const pdfX = x / scale;
+          const pdfY = (canvas.height - y) / scale;
+
+          document.getElementById("coords").textContent = 
+            `Page: ${num} | X: ${pdfX.toFixed(2)} | Y: ${pdfY.toFixed(2)}`;
+        });
+      });
+    }
+
+    // Drag & Drop
+    const draggableFields = document.querySelectorAll('.draggable-field');
+    draggableFields.forEach(field => {
+      field.addEventListener('dragstart', function(e) {
+        e.dataTransfer.setData('text/plain', field.dataset.type + '::' + field.textContent);
+      });
+    });
+
+    pdfContainer.addEventListener('dragover', e => e.preventDefault());
+
+    pdfContainer.addEventListener('drop', function(e) {
+      e.preventDefault();
+      const data = e.dataTransfer.getData('text/plain').split('::');
+      const type = data[0];
+      const name = data[1];
+
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left);
+      const y = (e.clientY - rect.top);
+      const pdfX = x / scale;
+      const pdfY = (canvas.height - y) / scale;
+
+      createFormField(type, name, x, y, pdfX, pdfY);
+    });
+
+    function createFormField(type, name, x, y, pdfX, pdfY) {
+      let el;
+      switch(type) {
+        case 'text': el = document.createElement('input'); el.type='text'; break;
+        case 'textarea': el = document.createElement('textarea'); el.rows=2; el.cols=15; break;
+        case 'checkbox': el = document.createElement('input'); el.type='checkbox'; break;
+        case 'radio': el = document.createElement('input'); el.type='radio'; break;
+        case 'select': 
+          el = document.createElement('select'); 
+          ['Option 1','Option 2'].forEach(optText => {
+            const opt = document.createElement('option'); opt.value=optText; opt.text=optText; el.add(opt);
+          });
+          break;
+        case 'date': el = document.createElement('input'); el.type='date'; break;
+        case 'number': el = document.createElement('input'); el.type='number'; break;
+        case 'password': el = document.createElement('input'); el.type='password'; break;
+        case 'email': el = document.createElement('input'); el.type='email'; break;
+        case 'file': el = document.createElement('input'); el.type='file'; break;
+      }
+
+      el.className = 'pdf-field';
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      el.placeholder = name;
+
+      // Add remove button
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = '×';
+      removeBtn.className = 'remove-btn';
+      removeBtn.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        pdfContainer.removeChild(el);
+        fieldsData = fieldsData.filter(f => f.element !== el);
+        updateFieldList();
+      });
+      el.appendChild(removeBtn);
+
+      pdfContainer.appendChild(el);
+
+      const fieldObj = { name, type, x: pdfX, y: pdfY, element: el };
+      fieldsData.push(fieldObj);
+      updateFieldList();
+
+      // Drag inside PDF
+      el.addEventListener('mousedown', function dragMouseDown(e) {
+        e.preventDefault();
+        let offsetX = e.clientX - el.offsetLeft;
+        let offsetY = e.clientY - el.offsetTop;
+
+        function moveMouse(e) {
+          el.style.left = (e.clientX - offsetX) + 'px';
+          el.style.top = (e.clientY - offsetY) + 'px';
+          const newX = (el.offsetLeft) / scale;
+          const newY = (canvas.height - el.offsetTop) / scale;
+          fieldObj.x = newX;
+          fieldObj.y = newY;
+          updateFieldList();
+        }
+
+        function stopDrag() {
+          document.removeEventListener('mousemove', moveMouse);
+          document.removeEventListener('mouseup', stopDrag);
+        }
+
+        document.addEventListener('mousemove', moveMouse);
+        document.addEventListener('mouseup', stopDrag);
+      });
+    }
+
+    function updateFieldList() {
+      fieldList.innerHTML = '';
+      fieldsData.forEach(f => {
+        const div = document.createElement('div');
+        div.textContent = `${f.name} (${f.type}) | X: ${f.x.toFixed(2)} | Y: ${f.y.toFixed(2)}`;
+        fieldList.appendChild(div);
+      });
+    }
+
+    // Manual add
+    document.getElementById('add-field-btn').addEventListener('click', () => {
+      const name = document.getElementById('manual-name').value.trim();
+      const x = parseFloat(document.getElementById('manual-x').value);
+      const y = parseFloat(document.getElementById('manual-y').value);
+      if (!name || isNaN(x) || isNaN(y)) return alert("Enter valid data");
+
+      const canvasX = x * scale;
+      const canvasY = canvas.height - (y * scale);
+      createFormField('text', name, canvasX, canvasY, x, y);
+
+      document.getElementById('manual-name').value = '';
+      document.getElementById('manual-x').value = '';
+      document.getElementById('manual-y').value = '';
+    });
+  </script>
+</body>
+</html>
